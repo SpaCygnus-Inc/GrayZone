@@ -15,7 +15,7 @@ UGrayZoneGameInstance& UGlobalStatics::GetGameInstance(const UWorld* inWorld)
     return *gameInstance;
 }
 
-int UGlobalStatics::GetTileCost(TSharedPtr<Tile> const tile, UDungeonGenerator& dungeon, int startingCost)
+int UGlobalStatics::GetTileCost(TSharedPtr<Tile> const tile, UDungeonGeneratorComponent& dungeon, int startingCost)
 {
     if (tile.Get() == nullptr) {
         UE_LOG(LogTemp, Fatal, TEXT("The specified tile should never be null."));
@@ -39,7 +39,7 @@ int UGlobalStatics::GetTileCost(TSharedPtr<Tile> const tile, UDungeonGenerator& 
     return finalCost;
 }
 
-TArray<TSharedPtr<Tile>> UGlobalStatics::GetBestPath(UDungeonGenerator& dungeon, TSharedPtr<Tile> const startingTile, TSharedPtr<Tile> const endingTile)
+TArray<TSharedPtr<Tile>> UGlobalStatics::GetBestPath(UDungeonGeneratorComponent& dungeon, TSharedPtr<Tile> const startingTile, TSharedPtr<Tile> const endingTile)
 {
     auto openList  = TPriorityQueue<TSharedPtr<Tile>>();         //The tiles that we will be checking next, the tiles with lesser cost takes priority.
     auto tilesCost = TMap<TSharedPtr<Tile>, int>();              //The tiles that were already checked with the cost that they were checked with.

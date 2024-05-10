@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Map/DungeonGenerator.h"
+#include "Map/DungeonGeneratorComponent.h"
 #include "LevelManipulator.generated.h"
 
 UCLASS()
@@ -26,7 +26,7 @@ protected:
 private:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
-    TObjectPtr<UDungeonGenerator> m_dungeonGenerator;
+    TObjectPtr<UDungeonGeneratorComponent> m_dungeonGenerator;
 
     UFUNCTION(CallInEditor)
     void GenerateLevel();

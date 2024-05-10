@@ -7,7 +7,7 @@
 #include "GrayZoneGameInstance.h"
 #include "Map/Tile.h"
 #include "Map/Grid.h"
-#include "Map/DungeonGenerator.h"
+#include "Map/DungeonGeneratorComponent.h"
 #include "GlobalStatics.generated.h"
 
 /**
@@ -21,10 +21,10 @@ class GRAYZONE_API UGlobalStatics : public UObject
     public:
 
     static UGrayZoneGameInstance& GetGameInstance(const UWorld* inWorld);
-    static TArray<TSharedPtr<Tile>> GetBestPath(UDungeonGenerator& dungeon, TSharedPtr<Tile> const startingTile, TSharedPtr<Tile> const endingTile);
+    static TArray<TSharedPtr<Tile>> GetBestPath(UDungeonGeneratorComponent& dungeon, TSharedPtr<Tile> const startingTile, TSharedPtr<Tile> const endingTile);
 
     private:
 
-    static int GetTileCost(TSharedPtr<Tile> const tile, UDungeonGenerator& dungeon, int startingCost);
+    static int GetTileCost(TSharedPtr<Tile> const tile, UDungeonGeneratorComponent& dungeon, int startingCost);
 	
 };

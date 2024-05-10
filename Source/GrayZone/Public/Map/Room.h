@@ -29,7 +29,8 @@ public:
     FVector2f GetCenterPosition() const;
     void DebugDraw(const UWorld* inWorld);
 
-    bool IntersectWithAnotherRoom(const Room *room) const; //Will return true if the two m_rooms intersect with each other.
+    bool IntersectWithAnotherRoom(const TSharedRef<Room> room) const;                           //Will return true if the two m_rooms intersect with each other.
+    bool IntersectWithAnotherRoom(FIntPoint roomPosition, FIntPoint roomSize) const; //Will return true if this room intersect with the specified supposed room params.
     
 	~Room();
     

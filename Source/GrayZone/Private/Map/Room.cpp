@@ -35,10 +35,21 @@ FVector2f Room::GetCenterPosition() const
     return centerPosition; 
 }
 
-bool Room::IntersectWithAnotherRoom(const Room* room) const
+bool Room::IntersectWithAnotherRoom(const TSharedRef<Room> room) const
 {
-    return (room->m_position.X >= this->m_position.X && room->m_position.X <= this->m_position.X + this->m_width) || (room->m_position.X + room->m_width >= this->m_position.X && room->m_position.X + room->m_width <= this->m_position.X + this->m_width)
-            && (room->m_position.Y >= this->m_position.Y && room->m_position.Y <= this->m_position.Y + this->m_depth) || (room->m_position.Y + room->m_depth >= this->m_position.Y && room->m_position.Y + room->m_depth <= this->m_position.Y + this->m_depth);
+    return this->IntersectWithAnotherRoom(room->GetPosition(), FIntPoint(room->GetDepth(), room->GetWidth()));
+}
+
+bool Room::IntersectWithAnotherRoom(FIntPoint roomPosition, FIntPoint roomSize) const
+{
+    auto thisRoomMaxXPos = this->m_position.X + this->GetDepth();
+    auto thisRoomMaxYPos = this->m_position.Y + this->GetWidth();
+
+    auto otherRoomMaxXPos = roomPosition.X + roomSize.X;
+    auto otherRoomMaxYPos = roomPosition.Y + roomSize.Y;
+
+    return ((roomPosition.X >= this->m_position.X && roomPosition.X <= thisRoomMaxXPos) || (otherRoomMaxXPos >= this->m_position.X && otherRoomMaxXPos <= thisRoomMaxXPos))
+        && ((roomPosition.Y >= this->m_position.Y && roomPosition.Y <= thisRoomMaxYPos) || (otherRoomMaxYPos >= this->m_position.Y && otherRoomMaxYPos <= thisRoomMaxYPos));
 }
 
 void Room::DebugDraw(const UWorld* inWorld)
