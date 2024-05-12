@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Map/Room.h"
+#include "Map/Corridor.h"
 
 // Sets default values
-ARoom::ARoom()
+ACorridor::ACorridor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -12,16 +12,9 @@ ARoom::ARoom()
 }
 
 // Called when the game starts or when spawned
-void ARoom::BeginPlay()
+void ACorridor::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
-
-// Called every frame
-void ARoom::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 

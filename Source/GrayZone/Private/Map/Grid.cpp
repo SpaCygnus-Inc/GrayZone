@@ -9,7 +9,6 @@ Grid::Grid(int width, int depth, int tileSize)
     this->m_width = width;
     this->m_depth = depth;
 
-    this->m_singleTileSize          = tileSize;
     this->m_corridorsTilesGenerated = false;
     this->m_tiles                   = TMap<FIntPoint, TSharedPtr<Tile>>();
 
@@ -19,7 +18,7 @@ Grid::Grid(int width, int depth, int tileSize)
         for (int y = 0; y < this->m_width; y ++)
         {
             auto position = FIntPoint(x, y);
-            this->m_tiles.Add(position, MakeShared<Tile>(position, this->m_singleTileSize));
+            this->m_tiles.Add(position, MakeShared<Tile>(position));
         }
     }
 }
@@ -29,35 +28,35 @@ FIntPoint Grid::GetHalfGridPos() const
     return FIntPoint(FMath::RoundToInt32(this->m_width * 0.5), FMath::RoundToInt32(this->m_depth * 0.5));
 }
 
-bool Grid::RoomIsInsideGrid(Room& room) const
+bool Grid::RoomIsInsideGrid(TSharedRef<RoomData> room) const
 {
-    return room.GetPosition().X >= 0 && room.GetPosition().X + room.GetDepth() <= this->GetDepth()
-        && room.GetPosition().Y >= 0 && room.GetPosition().Y + room.GetWidth() <= this->GetWidth();
+    return room->GetPosition().X >= 0 && room->GetPosition().X + room->GetDepth() <= this->GetDepth()
+        && room->GetPosition().Y >= 0 && room->GetPosition().Y + room->GetWidth() <= this->GetWidth();
 }
 
-void Grid::SetRoomTiles(Room& room)
+void Grid::SetRoomTiles(TSharedRef<RoomData> room)
 {
     if (!this->AllowChangeTilesTypes()) return;
 
-    for (int i = 0; i < room.GetWidth(); i++)
+    for (int i = 0; i < room->GetWidth(); i++)
     {
-        for (int j = 0; j < room.GetDepth(); j++)
+        for (int j = 0; j < room->GetDepth(); j++)
         {
-            auto currentTile = this->m_tiles[FIntPoint(room.GetPosition().X + j, room.GetPosition().Y + i)];
-            currentTile->ResetAndSetTileType(TileDescription::ROOM_TILE, room.GetID());
+            auto currentTile = this->m_tiles[FIntPoint(room->GetPosition().X + j, room->GetPosition().Y + i)];
+            currentTile->ResetAndSetTileType(TileDescription::ROOM_TILE, room->GetID());
         }
     }
 }
 
-void Grid::CleanRoomTiles(Room& room)
+void Grid::CleanRoomTiles(TSharedRef<RoomData> room)
 {
     if (!this->AllowChangeTilesTypes()) return;
 
-    for (int i = 0; i < room.GetWidth(); i++)
+    for (int i = 0; i < room->GetWidth(); i++)
     {
-        for (int j = 0; j < room.GetDepth(); j++)
+        for (int j = 0; j < room->GetDepth(); j++)
         {
-            auto currentTile = this->m_tiles[FIntPoint(room.GetPosition().X + j, room.GetPosition().Y + i)];
+            auto currentTile = this->m_tiles[FIntPoint(room->GetPosition().X + j, room->GetPosition().Y + i)];
             currentTile->ResetAndSetTileType(TileDescription::NONE_TILE);
         }
     }
@@ -110,22 +109,22 @@ void Grid::GenerateCorridordsOnAxis(bool horizontal, const UWorld* inWorld)
     }
 }
 
-TSharedPtr<Tile> Grid::GetRoomCenterTile(TSharedRef<Room> const room) const
+TSharedRef<Tile> Grid::GetRoomCenterTile(TSharedRef<RoomData> const room) const
 {
-    auto centerPos = room.Get().GetCenterPosition();
+    auto centerPos = room->GetCenterPosition();
     auto approxCenterTile = FIntPoint(FMath::RoundToInt32(centerPos.X), FMath::RoundToInt32(centerPos.Y));
 
-    return this->m_tiles[approxCenterTile];
+    return this->m_tiles[approxCenterTile].ToSharedRef();
 }
 
-TArray<TSharedPtr<Tile>> Grid::GetTileNeighbors(TSharedPtr<Tile> tile) const
+TArray<TSharedRef<Tile>> Grid::GetTileNeighbors(TSharedPtr<Tile> tile) const
 {
-    auto resultArray = TArray<TSharedPtr<Tile>>();
+    auto resultArray = TArray<TSharedRef<Tile>>();
 
     for (auto direction : Grid::m_tileNeighborsDirections)
     {
-        auto neighborPos = tile.Get()->GetPosition() + direction;
-        if (this->m_tiles.Contains(neighborPos)) resultArray.Add(TSharedPtr<Tile>(this->m_tiles[neighborPos]));
+        auto neighborPos = tile->GetPosition() + direction;
+        if (this->m_tiles.Contains(neighborPos)) resultArray.Add(this->m_tiles[neighborPos].ToSharedRef());
     }
 
     return resultArray;
@@ -142,17 +141,17 @@ bool Grid::AllowChangeTilesTypes() const
     return true;
 }
 
-TSharedPtr<Tile> Grid::GetTileAtPos(int x, int y) const
+TSharedRef<Tile> Grid::GetTileAtPos(int x, int y) const
 {
     return this->GetTileAtPos(FIntPoint(x, y));
 }
 
-TSharedPtr<Tile> Grid::GetTileAtPos(FIntPoint position) const
+TSharedRef<Tile> Grid::GetTileAtPos(FIntPoint position) const
 {
-    return this->m_tiles[position];
+    return this->m_tiles[position].ToSharedRef();
 }
 
-TSet<int> Grid::GenerateDoorsFromPathAndReturnAffectedRooms(TArray<TSharedPtr<Tile>> path)
+TSet<int> Grid::GenerateDoorsFromPathAndReturnAffectedRooms(TArray<TSharedRef<Tile>> path)
 {
     if (!this->m_corridorsTilesGenerated)
     {
@@ -166,45 +165,57 @@ TSet<int> Grid::GenerateDoorsFromPathAndReturnAffectedRooms(TArray<TSharedPtr<Ti
     //Each time a tile is a corridor one directly before or after a room tile then it is a door.
     for (int i = 1; i < path.Num() - 1; i++)
     {
-        if (!(path[i].Get()->GetTileDescription() & TileDescription::ROOM_TILE)) continue;
+        if (!(path[i]->GetTileDescription() & TileDescription::ROOM_TILE)) continue;
 
-        if (path[i-1].Get()->GetTileDescription() & TileDescription::CORRIDOR_TILE || path[i + 1].Get()->GetTileDescription() & TileDescription::CORRIDOR_TILE)
-            path[i].Get()->AddTileDescription(TileDescription::DOOR_TILE);
-
-        roomsIDs.Add(path[i].Get()->GetTileTypeID());
+        if (path[i - 1]->GetTileDescription() & TileDescription::CORRIDOR_TILE || (path[i - 1]->GetTileDescription() & TileDescription::ROOM_TILE && path[i - 1]->GetTileTypeID() != path[i]->GetTileTypeID())
+            || (path[i + 1]->GetTileDescription() & TileDescription::CORRIDOR_TILE) || (path[i + 1]->GetTileDescription() & TileDescription::ROOM_TILE && path[i + 1]->GetTileTypeID() != path[i]->GetTileTypeID()))
+        {
+            path[i]->AddTileDescription(TileDescription::DOOR_TILE);
+            roomsIDs.Add(path[i]->GetTileTypeID());
+        }
     }
 
     return roomsIDs;
 }
 
-void Grid::GenerateWallsForSpecifiedRoom(TSharedRef<Room> room)
+void Grid::GenerateWallsForSpecifiedRoom(TSharedRef<RoomData> room)
 {
-    auto roomPosition = room.Get().GetPosition();
+    auto roomPosition = room->GetPosition();
 
     //We check both the up and down walls...
-    for (int x = roomPosition.X; x < roomPosition.X + room.Get().GetDepth(); x++)
+    for (int x = roomPosition.X; x < roomPosition.X + room->GetDepth(); x++)
     {
         auto currentTile = m_tiles[FIntPoint(x, roomPosition.Y)];
-        if (!(currentTile.Get()->GetTileDescription() & TileDescription::DOOR_TILE))
-            currentTile.Get()->AddTileDescription(TileDescription::WALL_TILE);
+        if (!(currentTile->GetTileDescription() & TileDescription::DOOR_TILE))
+            currentTile->AddTileDescription(TileDescription::WALL_TILE);
 
-        currentTile = m_tiles[FIntPoint(x, roomPosition.Y + room.Get().GetWidth() - 1)];
-        if (!(currentTile.Get()->GetTileDescription() & TileDescription::DOOR_TILE))
-            currentTile.Get()->AddTileDescription(TileDescription::WALL_TILE);
+        currentTile = m_tiles[FIntPoint(x, roomPosition.Y + room->GetWidth() - 1)];
+        if (!(currentTile->GetTileDescription() & TileDescription::DOOR_TILE))
+            currentTile->AddTileDescription(TileDescription::WALL_TILE);
     }
 
     //Then we check the right and left.
-    for (int y = roomPosition.Y; y < roomPosition.Y + room.Get().GetWidth(); y++)
+    for (int y = roomPosition.Y; y < roomPosition.Y + room->GetWidth(); y++)
     {
         auto currentTile = m_tiles[FIntPoint(roomPosition.X, y)];
-        if (!(currentTile.Get()->GetTileDescription() & TileDescription::DOOR_TILE))
-            currentTile.Get()->AddTileDescription(TileDescription::WALL_TILE);
+        if (!(currentTile->GetTileDescription() & TileDescription::DOOR_TILE))
+            currentTile->AddTileDescription(TileDescription::WALL_TILE);
 
-        currentTile = m_tiles[FIntPoint(roomPosition.X + room.Get().GetDepth() - 1, y)];
-        if (!(currentTile.Get()->GetTileDescription() & TileDescription::DOOR_TILE))
-            currentTile.Get()->AddTileDescription(TileDescription::WALL_TILE);
+        currentTile = m_tiles[FIntPoint(roomPosition.X + room->GetDepth() - 1, y)];
+        if (!(currentTile->GetTileDescription() & TileDescription::DOOR_TILE))
+            currentTile->AddTileDescription(TileDescription::WALL_TILE);
     }
 
+}
+
+TArray<TSharedRef<Tile>> Grid::GetAllTilesWithDescription(TileDescription description) const
+{
+    auto tilesToReturn = TArray<TSharedRef<Tile>>();
+
+    for(auto entry : this->m_tiles)
+        if (entry.Value->GetTileDescription() & description) tilesToReturn.Add(entry.Value.ToSharedRef());
+
+    return tilesToReturn;
 }
 
 void Grid::ClearAllTiles()

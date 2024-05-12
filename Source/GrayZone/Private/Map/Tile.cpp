@@ -3,15 +3,26 @@
 
 #include "Map/Tile.h"
 
-Tile::Tile(int x, int y, int size)
+Tile::Tile()
 {
-    this->m_position       = FIntPoint(x, y);
-    this->m_size           = size;
-    this->m_centerPosition = FVector2f(x/2.f, y/2.f);
+    this->m_position = FIntPoint(-1, -1);
     this->ResetAndSetTileType(TileDescription::NONE_TILE, -1);
+
+    UE_LOG(LogTemp, Error, TEXT("A default tile was made without any params."));
 }
 
-Tile::Tile(FIntPoint pos, int size) : Tile(pos.X, pos.Y, size)
+Tile::Tile(int x, int y)
+{
+    this->m_position       = FIntPoint(x, y);
+    this->ResetAndSetTileType(TileDescription::NONE_TILE, -1);
+
+    //We calculate the real center position.
+    auto centerXPos            = x * UGrayZoneGameInstance::TILE_SIZE + (UGrayZoneGameInstance::TILE_SIZE * 0.5f);
+    auto centerYPos            = y * UGrayZoneGameInstance::TILE_SIZE + (UGrayZoneGameInstance::TILE_SIZE * 0.5f);
+    this->m_realCenterPosition = FVector2f(centerXPos, centerYPos);
+}
+
+Tile::Tile(FIntPoint pos) : Tile(pos.X, pos.Y)
 {
 }
 
@@ -53,16 +64,18 @@ void Tile::RemoveTileDescription(TileDescription description)
 
 void Tile::DebugDraw(const UWorld *inWorld, FColor color, float zPos)
 {
+    auto tileSize = UGrayZoneGameInstance::TILE_SIZE;
+
     FVector StartPoint(this->GetRealPosition().X, this->GetRealPosition().Y, zPos);
-    FVector EndPoint(this->GetRealPosition().X + this->GetRealSize(), this->GetRealPosition().Y, zPos);
+    FVector EndPoint(this->GetRealPosition().X + tileSize, this->GetRealPosition().Y, zPos);
     DrawDebugLine(inWorld, StartPoint, EndPoint, color, true);
 
     StartPoint = EndPoint;
-    EndPoint = FVector(this->GetRealPosition().X + this->GetRealSize(), this->GetRealPosition().Y + this->GetRealSize(), zPos);
+    EndPoint = FVector(this->GetRealPosition().X + tileSize, this->GetRealPosition().Y + tileSize, zPos);
     DrawDebugLine(inWorld, StartPoint, EndPoint, color, true);
 
     StartPoint = EndPoint;
-    EndPoint = FVector(this->GetRealPosition().X, this->GetRealPosition().Y + this->GetRealSize(), zPos);
+    EndPoint = FVector(this->GetRealPosition().X, this->GetRealPosition().Y + tileSize, zPos);
     DrawDebugLine(inWorld, StartPoint, EndPoint, color, true);
 
     StartPoint = EndPoint;

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Grid.h"
-#include "Room.h"
+#include "RoomData.h"
 #include "Components/ActorComponent.h"
 #include "DungeonGeneratorComponent.generated.h"
 
@@ -19,11 +19,12 @@ public:
 	UDungeonGeneratorComponent();
     ~UDungeonGeneratorComponent();
 
-    TSharedPtr<const Room> GetRoom(int roomID) const;
-    TSharedPtr<const Grid> GetGrid() const { return this->m_mainGrid; }
+    TOptional<TSharedRef<RoomData>>    GetRoom(int roomID) const;
+    TArray<TSharedRef<RoomData const>> GetAllRooms()       const;
+    TSharedRef<const Grid>             GetGrid()           const { return this->m_mainGrid.ToSharedRef(); }
 
     void GenerateDungeon();
-    void CleanDungeon(); //This will take care of cleaning the whole dungeon (either for creating another one or just when destroying this class).
+    void Clean(); //This will take care of cleaning the whole dungeon (either for creating another one or just when destroying this class).
 
 protected:
     // Called when the game starts or when spawned
@@ -32,9 +33,6 @@ protected:
     void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 private:
-    
-    UPROPERTY(VisibleInstanceOnly, BlueprintReadonly, Category = "Grid", meta = (AllowPrivateAccess = true))
-    int64 m_dungeonSeed;
 
     UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Grid", meta = (AllowPrivateAccess = true))
     bool m_drawGrid;
@@ -57,11 +55,11 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadonly, Category = "Rooms", meta = (AllowPrivateAccess = true))
     FIntPoint m_distanceBetweenRooms; //The distance between rooms will always be between these two specified values (x = min & y = max).
 
-    TMap<int, TSharedPtr<Room>> m_rooms;
-    TSharedPtr<Grid>            m_mainGrid;
-    TSharedPtr<Room>            m_spawnRoom;               //This room that the player will start at.
-    TSharedPtr<Room>            m_exitRoom;                //This is the room that will enable the player to exit this dungeon.
-    int                         m_BiggestRoomSizePossible; //We store here the highest size possible for a room (we take the highest depth or the highest width depending on which has a higher value).
+    TMap<int, TSharedPtr<RoomData>> m_rooms;
+    TSharedPtr<Grid>                m_mainGrid;
+    TSharedPtr<RoomData>            m_spawnRoom;               //This room that the player will start at.
+    TSharedPtr<RoomData>            m_exitRoom;                //This is the room that will enable the player to exit this dungeon.
+    int                             m_BiggestRoomSizePossible; //We store here the highest size possible for a room (we take the highest depth or the highest width depending on which has a higher value).
 
     TSet<int> m_roomsIdsOnMainPath;                                       //These are the IDs of all the rooms that are considered as "on the main path" from the starting point to the exit.
 

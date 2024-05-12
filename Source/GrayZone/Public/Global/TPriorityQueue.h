@@ -7,7 +7,7 @@
 template <typename T>
 struct TPriorityQueueItem
 {
-    T Item;
+    TOptional<T> Item;
     int Priority;
 
     TPriorityQueueItem() { }
@@ -28,16 +28,12 @@ public:
 
     T Pop()
     {
-        if (this->IsEmpty())
-        {
-            UE_LOG(LogTemp, Fatal, TEXT("You are trying to pop an item from an empty TPriorityQueue."));
-            return nullptr;
-        }
+        if (this->IsEmpty()) UE_LOG(LogTemp, Fatal, TEXT("You are trying to pop an item from an empty TPriorityQueue."));
 
         TPriorityQueueItem<T> queueItem;
         this->m_array.HeapPop(queueItem);
 
-        return queueItem.Item;
+        return queueItem.Item.GetValue();
     }
 
     void Enqueue(T item, int priority) { this->m_array.HeapPush(TPriorityQueueItem<T>(item, priority)); }

@@ -16,7 +16,7 @@ class GRAYZONE_API UGrayZoneGameInstance : public UGameInstance
 	
 public:
 
-    int static const TILE_SIZE = 1;
+    int static const TILE_SIZE = 100;
 
     UGrayZoneGameInstance();
 

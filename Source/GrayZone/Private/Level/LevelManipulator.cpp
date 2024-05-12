@@ -10,6 +10,7 @@ ALevelManipulator::ALevelManipulator()
 	PrimaryActorTick.bCanEverTick = true;
 
     this->m_dungeonGenerator = CreateDefaultSubobject<UDungeonGeneratorComponent>(TEXT("Dungeon Generator Component"));
+    this->m_dungeonDecorator = CreateDefaultSubobject<UDungeonDecoratorComponent>(TEXT("Dungeon Decorator Component"));
 }
 
 // Called when the game starts or when spawned
@@ -29,11 +30,18 @@ void ALevelManipulator::Tick(float DeltaTime)
 void ALevelManipulator::GenerateLevel()
 {
     this->CleanLevel();
+
+    //We use the current ticks as a seed for creating a map. 
+    this->m_dungeonSeed = FDateTime::Now().GetTicks();
+    FMath::RandInit(this->m_dungeonSeed);
+
     this->m_dungeonGenerator->GenerateDungeon();
+    this->m_dungeonDecorator->DecorateDungeon(this->m_dungeonGenerator, this);
 }
 
 void ALevelManipulator::CleanLevel()
 {
-    this->m_dungeonGenerator->CleanDungeon();
+    this->m_dungeonDecorator->Clean();
+    this->m_dungeonGenerator->Clean();
 }
 

@@ -24,8 +24,9 @@ class GRAYZONE_API Tile
 {
 public:
 
-	Tile(int x, int y, int size);
-    Tile(FIntPoint pos, int size);
+    Tile();
+	Tile(int x, int y);
+    Tile(FIntPoint pos);
 
 	~Tile();
 
@@ -37,17 +38,15 @@ public:
     inline const TileDescription GetTileDescription() const { return this->m_tileDescription; }
 
     inline int  GetTileTypeID()         const { return this->m_tileTypeID; }
-    inline int  GetRealSize()           const { return this->m_size * UGrayZoneGameInstance::TILE_SIZE; }
 
-    inline FVector2f GetCenterPosition() const { return this->m_centerPosition; }
-    inline FIntPoint GetPosition()       const { return this->m_position; }
-    inline FIntPoint GetRealPosition()   const { return this->m_position * UGrayZoneGameInstance::TILE_SIZE; }
+    inline FVector2f GetRealCenterPosition() const { return this->m_realCenterPosition; }
+    inline FIntPoint GetPosition()           const { return this->m_position; }
+    inline FIntPoint GetRealPosition()       const { return this->m_position * UGrayZoneGameInstance::TILE_SIZE; }
 
 private:
 
     FIntPoint m_position;
-    FVector2f m_centerPosition;
-    int       m_size;
+    FVector2f m_realCenterPosition;
 
     TileDescription m_tileDescription;
     int m_tileTypeID;

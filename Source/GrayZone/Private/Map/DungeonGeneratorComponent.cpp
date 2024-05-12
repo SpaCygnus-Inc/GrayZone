@@ -16,12 +16,11 @@ UDungeonGeneratorComponent::UDungeonGeneratorComponent()
     this->m_drawGrid = false;
     this->m_drawDungeonTiles = false;
     //Initialize our different shared pointers.
-    this->m_rooms     = TMap<int, TSharedPtr<Room>>();
+    this->m_rooms     = TMap<int, TSharedPtr<RoomData>>();
     this->m_mainGrid  = nullptr;
     this->m_spawnRoom = nullptr;
     this->m_exitRoom  = nullptr;
     //Initialize the rest.
-    this->m_dungeonSeed                          = 0;
     this->m_roomsSizesPossibleWithChanceToAppear = TMap<FIntPoint, float>();
     this->m_roomsIdsOnMainPath                   = TSet<int>();
     //Initialize the properties that can be modified in the editor to some random values (well not really random but yeh...).
@@ -49,10 +48,6 @@ void UDungeonGeneratorComponent::BeginPlay()
 
 void UDungeonGeneratorComponent::GenerateDungeon()
 {
-    //We use the current ticks as a seed for creating a map. 
-    this->m_dungeonSeed = FDateTime::Now().GetTicks();
-    FMath::RandInit(this->m_dungeonSeed);
-
     //We get the number of rooms that we want to generate, and how we want to divide them between the different rows.
     auto numberOfRooms = FMath::RandRange(this->m_numberOfRooms.X, this->m_numberOfRooms.Y);
     auto columnsCount  = FMath::RoundToInt(numberOfRooms * 0.3f);
@@ -64,7 +59,7 @@ void UDungeonGeneratorComponent::GenerateDungeon()
     //We create a new grid, using a calculated depth and width.
     auto depth         = gridBufferZoneSize.X * 2 + (this->m_BiggestRoomSizePossible * rowsCount);
     auto width         = gridBufferZoneSize.Y * 2 + (this->m_BiggestRoomSizePossible * columnsCount);
-    this->m_mainGrid   = MakeShared<Grid>(width, depth, UGrayZoneGameInstance::TILE_SIZE);
+    this->m_mainGrid   = MakeShared<Grid>(width, depth);
 
     auto usedMapLimits = this->GenerateRooms(FIntPoint(gridBufferZoneSize.X, gridBufferZoneSize.Y), columnsCount, rowsCount, numberOfRooms); //We generate the different rooms...
     this->GenerateExitAndSpawnRooms(FIntPoint(usedMapLimits.X, usedMapLimits.Y), FIntPoint(usedMapLimits.Z, usedMapLimits.W)); //Then we generate the spawn and exit rooms on the edges of the used dungeon...
@@ -75,23 +70,8 @@ void UDungeonGeneratorComponent::GenerateDungeon()
 
 FIntPoint UDungeonGeneratorComponent::GetRoomSize(float value)
 {
-    auto resultSize = FIntPoint(0, 0);
-
-    if (value > 100)
-    {
-        UE_LOG(LogTemp, Fatal, TEXT("a room can't have a chance bigger than 100% to appear."));
-        return resultSize;
-    }
-
-    auto currentValue = 0;
-    for (auto entry : this->m_roomsSizesPossibleWithChanceToAppear)
-    {
-        resultSize    = entry.Key;
-        currentValue += entry.Value;
-        if (value <= currentValue) break;
-    }
-
-    if (FMath::RandBool()) resultSize = FIntPoint(resultSize.Y, resultSize.X); //We randomly choose whether to rotate the room or not.
+    auto resultSize = UGlobalStatics::GetItemRandomlyUsingPercentage<FIntPoint>(this->m_roomsSizesPossibleWithChanceToAppear); //We get a room size randomly...
+    if (FMath::RandBool()) resultSize = UGlobalStatics::SwapFIntPoints(resultSize);                                            //And then we randomly choose whether to rotate the room or not.
 
     return resultSize;
 }
@@ -101,13 +81,13 @@ FIntVector4 UDungeonGeneratorComponent::GenerateRooms(FIntPoint downLeftPosition
     FIntPoint minPos(INT_MAX, INT_MAX);
     FIntPoint maxPos(0, 0);
 
-    auto roomsByRows = TMap<int, TArray<TSharedPtr<Room>>>(); //The rooms that are on each row.
+    auto roomsByRows = TMap<int, TArray<TSharedPtr<RoomData>>>(); //The rooms that are on each row.
 
     for (int i = 0; i < rowsCount; i++)
     {
         auto xPos              = downLeftPosition.X + (i * this->m_BiggestRoomSizePossible);       //The default x position for the next rooms.
         auto currentCountCount = FMath::Min(columnsCount, totalRoomsCount - i * columnsCount); //If the remaining number of rooms is less than a row max, then we just get the remaining number of rooms.
-        auto roomsInCurrentRow = TArray<TSharedPtr<Room>>();                                   //All the rooms that are on the current row.
+        auto roomsInCurrentRow = TArray<TSharedPtr<RoomData>>();                                   //All the rooms that are on the current row.
 
         for (int j = 0; j < currentCountCount; j++)
         {
@@ -120,7 +100,7 @@ FIntVector4 UDungeonGeneratorComponent::GenerateRooms(FIntPoint downLeftPosition
             {
                 auto distanceBtwRoomsOnY = FMath::RandRange(this->m_distanceBetweenRooms.X, this->m_distanceBetweenRooms.Y);
                 auto roomOnTheLeftSide   = roomsInCurrentRow.Last();
-                currentYPos              = roomOnTheLeftSide.Get()->GetPosition().Y + roomOnTheLeftSide.Get()->GetWidth() + distanceBtwRoomsOnY;
+                currentYPos              = roomOnTheLeftSide->GetPosition().Y + roomOnTheLeftSide->GetWidth() + distanceBtwRoomsOnY;
             }
             
             //When we already have other rows of rooms, we make sure that this room is as close as possible to the rooms under it without intersecting with them.
@@ -128,25 +108,25 @@ FIntVector4 UDungeonGeneratorComponent::GenerateRooms(FIntPoint downLeftPosition
             {
                 //We start by setting the x position a bit above the room that's on the same column as this one.
                 auto distanceBtwRoomsOnX = FMath::RandRange(this->m_distanceBetweenRooms.X, this->m_distanceBetweenRooms.Y);
-                currentXPos              = roomsByRows[i - 1][j].Get()->GetPosition().X + roomsByRows[i - 1][0].Get()->GetDepth() + distanceBtwRoomsOnX;
+                currentXPos              = roomsByRows[i - 1][j]->GetPosition().X + roomsByRows[i - 1][0]->GetDepth() + distanceBtwRoomsOnX;
             
                 //Each time that we find a room that's actually intersecting with this one, we make sure to move the x position up a bit.
                 for (int roomIndex = 0; roomIndex < columnsCount; roomIndex++)
                 {
                     auto roomUnder = roomsByRows[i - 1][roomIndex];
                
-                    if (!roomUnder.Get()->IntersectWithAnotherRoom(FIntPoint(currentXPos, currentYPos), currentRoomSize)) continue;
+                    if (!roomUnder->IntersectWithAnotherRoom(FIntPoint(currentXPos, currentYPos), currentRoomSize)) continue;
      
-                    currentXPos = roomUnder.Get()->GetPosition().X + roomUnder.Get()->GetDepth() + distanceBtwRoomsOnX;
+                    currentXPos = roomUnder->GetPosition().X + roomUnder->GetDepth() + distanceBtwRoomsOnX;
                 }
             }
 
             //Finally we create the room...
-            TSharedPtr<Room> currentRoom = MakeShared<Room>(FIntPoint(currentXPos, currentYPos), currentRoomSize.Y, currentRoomSize.X, this->GetWorld());
+            TSharedPtr<RoomData> currentRoom = MakeShared<RoomData>(FIntPoint(currentXPos, currentYPos), currentRoomSize.Y, currentRoomSize.X, this->GetWorld());
 
             //And we store it accordingly.
             roomsInCurrentRow.Add(currentRoom);
-            this->m_rooms.Add(currentRoom.Get()->GetID(), currentRoom);
+            this->m_rooms.Add(currentRoom->GetID(), currentRoom);
 
             //We set the min and max positions of the rooms.
             minPos.X = minPos.X <= currentXPos ? minPos.X : currentXPos;
@@ -163,7 +143,7 @@ FIntVector4 UDungeonGeneratorComponent::GenerateRooms(FIntPoint downLeftPosition
 
 void UDungeonGeneratorComponent::AssignTiles()
 {
-    for (auto entry : this->m_rooms) this->m_mainGrid->SetRoomTiles(entry.Value.ToSharedRef().Get());
+    for (auto entry : this->m_rooms) this->m_mainGrid->SetRoomTiles(entry.Value.ToSharedRef());
 
     this->m_mainGrid->GenerateCorridorsTiles(this->GetWorld()); //Now that we have the room tiles, we take care of assigning the corridors tiles...
     this->GenerateValidPathsToAllRooms();                       //Finally we make sure that all rooms have a valid path and create door and wall tiles for rooms.
@@ -180,8 +160,8 @@ void UDungeonGeneratorComponent::GenerateExitAndSpawnRooms(FIntPoint minPos, FIn
     //The spawn room is generated on the bottom half of the map.
     auto spawnRoomStartingPos = FIntPoint(minPos.X - m_spawnRoomSize.X - distanceBtwRooms, FMath::RandRange(minPos.Y, maxPos.X - m_spawnRoomSize.Y));
 
-    m_exitRoom = MakeShared<Room>(exitRoomStartingPos, this->m_exitRoomSize.Y, this->m_exitRoomSize.X, this->GetWorld());
-    m_spawnRoom = MakeShared<Room>(spawnRoomStartingPos, this->m_spawnRoomSize.Y, this->m_spawnRoomSize.X, this->GetWorld());
+    m_exitRoom  = MakeShared<RoomData>(exitRoomStartingPos, this->m_exitRoomSize.Y, this->m_exitRoomSize.X, this->GetWorld(), RoomType::EXIT_ROOM);
+    m_spawnRoom = MakeShared<RoomData>(spawnRoomStartingPos, this->m_spawnRoomSize.Y, this->m_spawnRoomSize.X, this->GetWorld(), RoomType::SPAWN_ROOM);
 
     this->m_rooms.Add(this->m_exitRoom->GetID(), m_exitRoom);
     this->m_rooms.Add(this->m_spawnRoom->GetID(), m_spawnRoom);
@@ -190,45 +170,54 @@ void UDungeonGeneratorComponent::GenerateExitAndSpawnRooms(FIntPoint minPos, FIn
 void UDungeonGeneratorComponent::GenerateValidPathsToAllRooms()
 {
     auto roomsIDsWithAPath   = TSet<int>();                                                                //Rooms that already have a path directing to them from the spawn room.
-    auto spawnRoomCenterPos  = this->m_spawnRoom.Get()->GetCenterPosition();                               //The position of the spawn room center.
-    auto spawnRoomCenterTile = this->m_mainGrid.Get()->GetRoomCenterTile(this->m_spawnRoom.ToSharedRef()); //Approximately the center tile of the room.
+    auto spawnRoomCenterPos  = this->m_spawnRoom->GetCenterPosition();                               //The position of the spawn room center.
+    auto spawnRoomCenterTile = this->m_mainGrid->GetRoomCenterTile(this->m_spawnRoom.ToSharedRef()); //Approximately the center tile of the room.
 
     //We sort the rooms from the farthest to the closest to the spawn room.
-    this->m_rooms.ValueSort([spawnRoomCenterPos] (TSharedPtr<Room> first, TSharedPtr<Room> second) {
-        return FVector2f::Distance(first.Get()->GetCenterPosition(), spawnRoomCenterPos) > FVector2f::Distance(second.Get()->GetCenterPosition(), spawnRoomCenterPos);
+    this->m_rooms.ValueSort([spawnRoomCenterPos] (TSharedPtr<RoomData> first, TSharedPtr<RoomData> second) {
+        return FVector2f::Distance(first->GetCenterPosition(), spawnRoomCenterPos) > FVector2f::Distance(second->GetCenterPosition(), spawnRoomCenterPos);
     });
 
     for (auto room : this->m_rooms)
     {
-        if (roomsIDsWithAPath.Contains(room.Value.Get()->GetID()) || this->m_spawnRoom == room.Value) continue;       //If the room already has a path or is the spawn room itself, we ignore it.
+        if (roomsIDsWithAPath.Contains(room.Value->GetID()) || this->m_spawnRoom == room.Value) continue;       //If the room already has a path or is the spawn room itself, we ignore it.
 
-        auto roomCenterTile        = this->m_mainGrid.Get()->GetRoomCenterTile(room.Value.ToSharedRef());             //We get the center tile of this room...
+        auto roomCenterTile        = this->m_mainGrid->GetRoomCenterTile(room.Value.ToSharedRef());             //We get the center tile of this room...
         auto pathToRoom            = UGlobalStatics::GetBestPath(*this, spawnRoomCenterTile, roomCenterTile);         //Then we create a path toward it from the spawn room...
-        TSet<int> affectedRoomsIds = this->m_mainGrid.Get()->GenerateDoorsFromPathAndReturnAffectedRooms(pathToRoom); //Using that path, we generate doors for all the rooms that the path is passing through...
+        TSet<int> affectedRoomsIds = this->m_mainGrid->GenerateDoorsFromPathAndReturnAffectedRooms(pathToRoom); //Using that path, we generate doors for all the rooms that the path is passing through...
 
         //Finally we make sure to create walls around those rooms so that the next path will always try to use the already used tile doors.
         for (auto roomID : affectedRoomsIds)
         {      
             if (roomsIDsWithAPath.Contains(roomID)) continue;
 
-            this->m_mainGrid.Get()->GenerateWallsForSpecifiedRoom(this->m_rooms[roomID].ToSharedRef());
+            this->m_mainGrid->GenerateWallsForSpecifiedRoom(this->m_rooms[roomID].ToSharedRef());
             roomsIDsWithAPath.Add(roomID);
         }
     }
 }
 
-TSharedPtr<const Room> UDungeonGeneratorComponent::GetRoom(int roomID) const
+TOptional<TSharedRef<RoomData>> UDungeonGeneratorComponent::GetRoom(int roomID) const
 {
     if (!this->m_rooms.Contains(roomID))
     {
         UE_LOG(LogTemp, Error, TEXT("There's no room with that ID."));
-        return nullptr;
+        return TOptional<TSharedRef<RoomData>>();
     }
 
-    return this->m_rooms[roomID];
+    return this->m_rooms[roomID].ToSharedRef();
 }
 
-void UDungeonGeneratorComponent::CleanDungeon()
+TArray<TSharedRef<RoomData const>> UDungeonGeneratorComponent::GetAllRooms() const
+{
+    auto rooms = TArray<TSharedRef<RoomData const>>();
+
+    for (auto entry : this->m_rooms) rooms.Add(entry.Value.ToSharedRef());
+
+    return rooms;
+}
+
+void UDungeonGeneratorComponent::Clean()
 {
     this->m_rooms.Empty();
     this->m_spawnRoom.Reset();
@@ -255,7 +244,7 @@ bool UDungeonGeneratorComponent::GeneratorConfigIsValid()
     return true;
 }
 
-UDungeonGeneratorComponent::~UDungeonGeneratorComponent() { this->CleanDungeon(); }
+UDungeonGeneratorComponent::~UDungeonGeneratorComponent() { this->Clean(); }
 
 void UDungeonGeneratorComponent::DebugDraw()
 {
