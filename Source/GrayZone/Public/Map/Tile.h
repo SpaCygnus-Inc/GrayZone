@@ -37,16 +37,16 @@ public:
     void RemoveTileDescription(TileDescription description);
     inline const TileDescription GetTileDescription() const { return this->m_tileDescription; }
 
-    inline int  GetTileTypeID()         const { return this->m_tileTypeID; }
+    inline int  GetTileTypeID()              const { return this->m_tileTypeID; }
 
-    inline FVector2f GetRealCenterPosition() const { return this->m_realCenterPosition; }
+    inline FVector   GetRealCenterPosition() const { return this->m_realCenterPosition; }
     inline FIntPoint GetPosition()           const { return this->m_position; }
     inline FIntPoint GetRealPosition()       const { return this->m_position * UGrayZoneGameInstance::TILE_SIZE; }
 
 private:
 
     FIntPoint m_position;
-    FVector2f m_realCenterPosition;
+    FVector   m_realCenterPosition;
 
     TileDescription m_tileDescription;
     int m_tileTypeID;

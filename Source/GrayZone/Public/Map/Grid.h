@@ -37,6 +37,8 @@ public:
     TSharedRef<Tile> GetTileAtPos(int x, int y)       const;
     TSharedRef<Tile> GetTileAtPos(FIntPoint position) const;
 
+    TMap<FIntPoint, TWeakPtr<Tile>> GetTiles(FIntPoint position, FIntPoint size); //Get all tiles starting from specified position and going through the specified size.
+
     TArray<TSharedRef<Tile>> GetAllTilesWithDescription(TileDescription description) const; //We get the refs of all the tiles that have the specified tile description.
 
     TSet<int> GenerateDoorsFromPathAndReturnAffectedRooms(TArray<TSharedRef<Tile>> path);   //Using the specified path, we set the tiles that will be considered as doors and then return the rooms IDs that the path passed from.

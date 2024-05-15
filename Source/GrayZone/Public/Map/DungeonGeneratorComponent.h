@@ -19,9 +19,9 @@ public:
 	UDungeonGeneratorComponent();
     ~UDungeonGeneratorComponent();
 
-    TOptional<TSharedRef<RoomData>>    GetRoom(int roomID) const;
-    TArray<TSharedRef<RoomData const>> GetAllRooms()       const;
-    TSharedRef<const Grid>             GetGrid()           const { return this->m_mainGrid.ToSharedRef(); }
+    TOptional<TSharedRef<RoomData>> GetRoom(int roomID) const;
+    TArray<TSharedRef<RoomData>>    GetAllRooms()       const;
+    TSharedRef<const Grid>          GetGrid()           const { return this->m_mainGrid.ToSharedRef(); }
 
     void GenerateDungeon();
     void Clean(); //This will take care of cleaning the whole dungeon (either for creating another one or just when destroying this class).

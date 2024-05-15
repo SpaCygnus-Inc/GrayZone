@@ -4,23 +4,21 @@
 #include "Map/DungeonDecoratorComponent.h"
 #include "Global/GlobalStatics.h"
 
-// Sets default values for this component's properties
 UDungeonDecoratorComponent::UDungeonDecoratorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-    //this->m_roomsToSpawn     = TMap<FIntPoint, TMap<TSubclassOf<ARoom>, float>>();
-    this->m_corridorsToSpawn = TArray<TSubclassOf<ACorridor>>();
-    this->m_spawnedCorridors = TArray<TObjectPtr<ACorridor>>();
-}
+    this->m_roomsToSpawn         = TMap<FIntPoint, FRoomsToSpawn>();
+    this->m_corridorsToSpawn     = TArray<TSubclassOf<ACorridor>>();
 
+    this->m_spawnedCorridors     = TArray<TObjectPtr<ACorridor>>();
+    this->m_spawnedRooms         = TArray<TObjectPtr<ARoom>>();
 
-// Called when the game starts
-void UDungeonDecoratorComponent::BeginPlay()
-{
-	Super::BeginPlay();
+    this->m_spawningRoomsToSpawn = FRoomsToSpawn();
+    this->m_exitRoomsToSpawn     = FRoomsToSpawn();
 
-	// ...
+    this->m_wallsToSpawn         = TMap<FWallType, float>();
+    this->m_WallsByPackOf        = FIntPoint(4, 7);
 }
 
 void UDungeonDecoratorComponent::DecorateDungeon(TObjectPtr<UDungeonGeneratorComponent> const dungeonGenerator, TObjectPtr<AActor> const parentActor)
@@ -58,6 +56,7 @@ void UDungeonDecoratorComponent::PlaceRooms(TObjectPtr<UDungeonGeneratorComponen
         roomRotation = FMath::RandBool() ? roomRotation : FRotator(0, roomRotation.Yaw + 180.0f, 0); //We randomly choose whether we want to rotate this room 180 degrees or not (180 degrees so that it still be valid at the same position).
         auto spawnedRoom = this->GetWorld()->SpawnActor<ARoom>(roomToSpawn, roomData->GetRealCenterPos(), roomRotation); //Finally we spawn the room...
         spawnedRoom->AttachToActor(parentActor, FAttachmentTransformRules::KeepRelativeTransform);                       //Attach it to the parent actor...
+        spawnedRoom->FinishPlacing(roomData, m_WallsByPackOf, this->m_wallsToSpawn);
         this->m_spawnedRooms.Add(spawnedRoom);                                                                           //And add it to the list of spawned rooms.
     }
 }
@@ -75,6 +74,7 @@ void UDungeonDecoratorComponent::PlaceCorridors(TObjectPtr<UDungeonGeneratorComp
         //We spawn the corridor at the needed position and then attach it to the parent actor.
         auto spawnedCorridor = this->GetWorld()->SpawnActor<ACorridor>(corridorTypeToSpawn, spawnPos, FRotator::ZeroRotator);
         spawnedCorridor->AttachToActor(parentActor, FAttachmentTransformRules::KeepRelativeTransform);
+
         this->m_spawnedCorridors.Add(spawnedCorridor);
     }
 }
@@ -82,7 +82,7 @@ void UDungeonDecoratorComponent::PlaceCorridors(TObjectPtr<UDungeonGeneratorComp
 void UDungeonDecoratorComponent::Clean()
 {
     for (auto corridor : this->m_spawnedCorridors) corridor->Destroy();
-    for (auto room : this->m_spawnedRooms)         room->Destroy();
+    for (auto room : this->m_spawnedRooms)         { room->Clean(); room->Destroy(); }
 
     this->m_spawnedCorridors.Reset();
     this->m_spawnedRooms.Reset();

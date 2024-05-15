@@ -122,7 +122,8 @@ FIntVector4 UDungeonGeneratorComponent::GenerateRooms(FIntPoint downLeftPosition
             }
 
             //Finally we create the room...
-            TSharedPtr<RoomData> currentRoom = MakeShared<RoomData>(FIntPoint(currentXPos, currentYPos), currentRoomSize.Y, currentRoomSize.X, this->GetWorld());
+            auto roomPos = FIntPoint(currentXPos, currentYPos);
+            TSharedPtr<RoomData> currentRoom = MakeShared<RoomData>(roomPos, currentRoomSize.Y, currentRoomSize.X, this->m_mainGrid->GetTiles(roomPos, currentRoomSize), this->GetWorld());
 
             //And we store it accordingly.
             roomsInCurrentRow.Add(currentRoom);
@@ -160,8 +161,8 @@ void UDungeonGeneratorComponent::GenerateExitAndSpawnRooms(FIntPoint minPos, FIn
     //The spawn room is generated on the bottom half of the map.
     auto spawnRoomStartingPos = FIntPoint(minPos.X - m_spawnRoomSize.X - distanceBtwRooms, FMath::RandRange(minPos.Y, maxPos.X - m_spawnRoomSize.Y));
 
-    m_exitRoom  = MakeShared<RoomData>(exitRoomStartingPos, this->m_exitRoomSize.Y, this->m_exitRoomSize.X, this->GetWorld(), RoomType::EXIT_ROOM);
-    m_spawnRoom = MakeShared<RoomData>(spawnRoomStartingPos, this->m_spawnRoomSize.Y, this->m_spawnRoomSize.X, this->GetWorld(), RoomType::SPAWN_ROOM);
+    m_exitRoom  = MakeShared<RoomData>(exitRoomStartingPos, this->m_exitRoomSize.Y, this->m_exitRoomSize.X, this->m_mainGrid->GetTiles(exitRoomStartingPos, this->m_exitRoomSize), this->GetWorld(), RoomType::EXIT_ROOM);
+    m_spawnRoom = MakeShared<RoomData>(spawnRoomStartingPos, this->m_spawnRoomSize.Y, this->m_spawnRoomSize.X, this->m_mainGrid->GetTiles(spawnRoomStartingPos, this->m_spawnRoomSize), this->GetWorld(), RoomType::SPAWN_ROOM);
 
     this->m_rooms.Add(this->m_exitRoom->GetID(), m_exitRoom);
     this->m_rooms.Add(this->m_spawnRoom->GetID(), m_spawnRoom);
@@ -208,9 +209,9 @@ TOptional<TSharedRef<RoomData>> UDungeonGeneratorComponent::GetRoom(int roomID) 
     return this->m_rooms[roomID].ToSharedRef();
 }
 
-TArray<TSharedRef<RoomData const>> UDungeonGeneratorComponent::GetAllRooms() const
+TArray<TSharedRef<RoomData>> UDungeonGeneratorComponent::GetAllRooms() const
 {
-    auto rooms = TArray<TSharedRef<RoomData const>>();
+    auto rooms = TArray<TSharedRef<RoomData>>();
 
     for (auto entry : this->m_rooms) rooms.Add(entry.Value.ToSharedRef());
 

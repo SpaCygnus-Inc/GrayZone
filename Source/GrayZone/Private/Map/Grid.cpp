@@ -151,6 +151,16 @@ TSharedRef<Tile> Grid::GetTileAtPos(FIntPoint position) const
     return this->m_tiles[position].ToSharedRef();
 }
 
+TMap<FIntPoint, TWeakPtr<Tile>> Grid::GetTiles(FIntPoint position, FIntPoint size)
+{
+    auto tilesToReturn = TMap<FIntPoint, TWeakPtr<Tile>>();
+
+    for (int x = position.X; x < position.X + size.X; x++)
+        for (int y = position.Y; y < position.Y + size.Y; y++) tilesToReturn.Add(FIntPoint(x, y), this->m_tiles[FIntPoint(x, y)]);
+
+    return tilesToReturn;
+}
+
 TSet<int> Grid::GenerateDoorsFromPathAndReturnAffectedRooms(TArray<TSharedRef<Tile>> path)
 {
     if (!this->m_corridorsTilesGenerated)

@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Engine/StaticMeshActor.h"
 #include "Corridor.generated.h"
 
 UCLASS()
-class GRAYZONE_API ACorridor : public AActor
+class GRAYZONE_API ACorridor : public AStaticMeshActor
 {
 	GENERATED_BODY()
 	

@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Engine/StaticMeshActor.h"
 #include "Map/DungeonGeneratorComponent.h"
 #include "Map/DungeonDecoratorComponent.h"
 #include "LevelManipulator.generated.h"
 
 UCLASS()
-class GRAYZONE_API ALevelManipulator : public AActor
+class GRAYZONE_API ALevelManipulator : public AStaticMeshActor
 {
 	GENERATED_BODY()
 	

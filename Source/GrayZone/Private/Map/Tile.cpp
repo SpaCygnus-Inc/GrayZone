@@ -19,7 +19,7 @@ Tile::Tile(int x, int y)
     //We calculate the real center position.
     auto centerXPos            = x * UGrayZoneGameInstance::TILE_SIZE + (UGrayZoneGameInstance::TILE_SIZE * 0.5f);
     auto centerYPos            = y * UGrayZoneGameInstance::TILE_SIZE + (UGrayZoneGameInstance::TILE_SIZE * 0.5f);
-    this->m_realCenterPosition = FVector2f(centerXPos, centerYPos);
+    this->m_realCenterPosition = FVector(centerXPos, centerYPos, 0);
 }
 
 Tile::Tile(FIntPoint pos) : Tile(pos.X, pos.Y)
