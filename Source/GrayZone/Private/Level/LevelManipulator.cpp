@@ -11,20 +11,21 @@ ALevelManipulator::ALevelManipulator()
 
     this->m_dungeonGenerator = CreateDefaultSubobject<UDungeonGeneratorComponent>(TEXT("Dungeon Generator Component"));
     this->m_dungeonDecorator = CreateDefaultSubobject<UDungeonDecoratorComponent>(TEXT("Dungeon Decorator Component"));
+
+    m_playerCharacter = TSubclassOf<APlayerCharacter>();
+    m_spawnedPlayer   = nullptr;
 }
 
 // Called when the game starts or when spawned
 void ALevelManipulator::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ALevelManipulator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ALevelManipulator::GenerateLevel()
@@ -37,10 +38,37 @@ void ALevelManipulator::GenerateLevel()
 
     this->m_dungeonGenerator->GenerateDungeon();
     this->m_dungeonDecorator->DecorateDungeon(this->m_dungeonGenerator, this);
+
+    //TO DO: in the future the spawn position will be set manually inside the spawn room and then we will be getting it from the Room itself. 
+    auto spawnPos = this->m_dungeonGenerator->GetSpawnRoomData()->GetRealCenterPos();
+    this->SpawnOrEnablePlayer(FVector(spawnPos.X, spawnPos.Y, 95));
+
+    //We spawn the camera and focus it on the player.
+    if (!this->m_cameraType)
+    {
+        UE_LOG(LogTemp, Fatal, TEXT("No camera type was specified for the player character to spawn."));
+        return;
+    }
+
+    if (this->m_camera == nullptr) this->m_camera = this->GetWorld()->SpawnActor<ATargetCamera>(this->m_cameraType);
+    this->m_camera->SetTarget(this->m_spawnedPlayer);
+}
+
+
+void ALevelManipulator::SpawnOrEnablePlayer(FVector spawnPos)
+{
+    if (this->m_spawnedPlayer == nullptr) this->m_spawnedPlayer = this->GetWorld()->SpawnActor<APlayerCharacter>(this->m_playerCharacter, spawnPos, FRotator::ZeroRotator);
+    else 
+    {
+        this->m_spawnedPlayer->SetActorLocationAndRotation(spawnPos, FRotator::ZeroRotator);
+        m_spawnedPlayer->SetActorHiddenInGame(false);
+    }
 }
 
 void ALevelManipulator::CleanLevel()
 {
+    if (m_spawnedPlayer != nullptr) m_spawnedPlayer->SetActorHiddenInGame(true);
+
     this->m_dungeonDecorator->Clean();
     this->m_dungeonGenerator->Clean();
 }
