@@ -28,6 +28,7 @@ public:
     
     UFUNCTION(BlueprintCallable)
     inline FVector GetCurrentVelocity() { return this->m_currentVelocity; }
+    inline FVector GetMovingDirection() { return this->m_currentVelocity.GetSafeNormal(); }
     inline bool IsMoving()              { return !this->m_currentVelocity.IsZero(); }
 
 protected:

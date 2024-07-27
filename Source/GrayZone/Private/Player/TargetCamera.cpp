@@ -13,7 +13,9 @@ ATargetCamera::ATargetCamera()
 	PrimaryActorTick.bCanEverTick = true;
 
     this->m_cameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
-    this->RootComponent = this->m_cameraComponent;
+    this->RootComponent     = this->m_cameraComponent;
+
+    m_cameraFixingOvershoot = true;
 }
 
 // Called when the game starts or when spawned
@@ -35,12 +37,21 @@ void ATargetCamera::Tick(float DeltaTime)
         return;
     }
 
-    auto desiredPosition = this->m_target->GetTargetLocation() + this->m_cameraOffset; //The final position will be the current target position plus the camera offset.
+    auto currentPosition   = this->GetActorLocation();
+    auto desiredPosition   = this->m_target->GetActorLocation() + this->m_cameraOffset;   //The final position will be the current target position plus the camera offset.
+    auto overshootPosition = desiredPosition + (this->m_target->GetMovingDirection() * this->m_overshootFactor); //
 
-    if (!this->m_target->IsMoving() && this->GetActorLocation() == desiredPosition) return; //If the player isn't moving and the camera is already in the right position then no need to do anything else.
+    auto nextPosition = FMath::VInterpTo(currentPosition, overshootPosition, DeltaTime, this->m_interpolationSpeed);
 
-    auto nextPosition = FMath::VInterpTo(this->m_target->GetTargetLocation(), desiredPosition, DeltaTime, this->m_interpolationSpeed);
-    nextPosition.Z = desiredPosition.Z;
+    //
+    if (!this->m_target->IsMoving() && (m_cameraFixingOvershoot || currentPosition.Equals(overshootPosition, 1.0f)))
+    {
+        this->m_cameraFixingOvershoot = true;
+        nextPosition = FMath::VInterpTo(currentPosition, desiredPosition, DeltaTime, this->m_interpolationSpeed * 1.5f);
+    }else 
+        this->m_cameraFixingOvershoot = false;
+
+    //nextPosition.Z = desiredPosition.Z;
     this->SetActorLocation(nextPosition);
 }
 

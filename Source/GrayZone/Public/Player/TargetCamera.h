@@ -35,10 +35,15 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     float m_interpolationSpeed; //How fast do we want the camera to follow the player ?
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
+    float m_overshootFactor; //How far we want the camera to overshoot before it correct itself which will give a more organic feel to the camera (this is a multiplier that's applied to the next player position).
+
     UPROPERTY(VisibleInstanceOnly)
     TObjectPtr<APlayerCharacter> m_target; //The player that this camera will follow.
 
     UPROPERTY(VisibleAnywhere)
     TObjectPtr<UCameraComponent> m_cameraComponent;
+
+    bool m_cameraFixingOvershoot;
 
 };
