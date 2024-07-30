@@ -20,9 +20,13 @@ APlayerCharacter::APlayerCharacter()
     this->m_mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
     this->m_mesh->SetupAttachment(this->RootComponent);
 
-    //Initialize the arrow component
+    //Initialize the arrow component.
     this->m_arrow = CreateDefaultSubobject<UArrowComponent>(TEXT("ForwardDirection"));
     this->m_arrow->SetupAttachment(this->RootComponent);
+
+    //Initialize velocities and movement directions.
+    m_forward = m_right = FVector::ZeroVector;
+    m_forwardVelocity = m_rightVelocity = FVector::ZeroVector;
 }
 
 // Called when the game starts or when spawned

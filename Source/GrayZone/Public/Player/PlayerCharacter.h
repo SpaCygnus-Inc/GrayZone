@@ -55,8 +55,8 @@ private:
     FVector m_rightVelocity;
     FVector m_forwardVelocity;
 
-    FVector3d m_forward;         //The forward vector used for movement.
-    FVector3d m_right;           //The right vector used for movement.
+    FVector3d m_forward; //The forward vector used for movement.
+    FVector3d m_right;   //The right vector used for movement.
 
     void MoveForward(float value);
     void MoveRight(float value);
