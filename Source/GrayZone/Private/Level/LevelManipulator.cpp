@@ -57,7 +57,16 @@ void ALevelManipulator::GenerateLevel()
 
 void ALevelManipulator::SpawnOrEnablePlayer(FVector spawnPos)
 {
-    if (this->m_spawnedPlayer == nullptr) this->m_spawnedPlayer = this->GetWorld()->SpawnActor<APlayerCharacter>(this->m_playerCharacter, spawnPos, FRotator::ZeroRotator);
+    if (this->m_spawnedPlayer == nullptr) 
+    {
+        this->m_spawnedPlayer = this->GetWorld()->SpawnActor<APlayerCharacter>(this->m_playerCharacter, spawnPos, FRotator::ZeroRotator);
+
+        //We initialize the forward and right vectors for player movement using the camera rotation (the camera rotation is always fixed).
+        auto cameraRotation = ATargetCamera::CAMERA_ROTATION;
+        cameraRotation.Pitch = 0; //We don't want the player to move up or down.
+
+        this->m_spawnedPlayer->Initialize(cameraRotation.Vector(), FRotationMatrix(cameraRotation).GetScaledAxis(EAxis::Y));
+    }
     else 
     {
         this->m_spawnedPlayer->SetActorLocationAndRotation(spawnPos, FRotator::ZeroRotator);

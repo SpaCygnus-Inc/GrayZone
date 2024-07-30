@@ -14,6 +14,8 @@ class GRAYZONE_API ATargetCamera : public AActor
 	GENERATED_BODY()
 	
 public:	
+    FRotator static const CAMERA_ROTATION; //The rotation that the camera will always have.
+
 	// Sets default values for this actor's properties
 	ATargetCamera();
 
@@ -24,8 +26,6 @@ protected:
     virtual void BeginPlay() override;
 
 private:
-
-    FRotator static const CAMERA_ROTATION; //The rotation that the camera will always have.
 
     virtual void Tick(float DeltaTime) override;
 

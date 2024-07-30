@@ -43,16 +43,14 @@ void APlayerCharacter::Tick(float DeltaTime)
         auto desiredRotation = velocity.Rotation(); //We get the rotation of the character using the current movement direction.
 
         FHitResult hitResult;
-        this->AddActorWorldOffset(velocity * DeltaTime, true, &hitResult); //We try to move the character toward that direction.
-
-        //If the player hit a collider then we check whether we should do a "slide" or not (usually happen when the player is moving perpendicularly).
+        this->AddActorWorldOffset(velocity * DeltaTime, true, &hitResult);
         if (hitResult.IsValidBlockingHit())
         {
             velocity = FVector::VectorPlaneProject(velocity * DeltaTime, hitResult.Normal);
             this->AddActorWorldOffset(velocity, true);
         }
 
-        this->SetActorRotation(desiredRotation); //Finally we apply the rotation.
+        this->SetActorRotation(desiredRotation);
     }
 }
 

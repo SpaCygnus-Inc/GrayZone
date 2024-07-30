@@ -27,9 +27,12 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
     UFUNCTION(BlueprintCallable)
-    inline FVector GetCurrentVelocity() { return this->m_currentVelocity; }
-    inline FVector GetMovingDirection() { return this->m_currentVelocity.GetSafeNormal(); }
-    inline bool IsMoving()              { return !this->m_currentVelocity.IsZero(); }
+    inline FVector GetCurrentVelocity() { return  this->GetMovingDirection() * this->m_moveSpeed; } ;
+
+    inline FVector GetMovingDirection() { return  FVector(this->m_rightVelocity.X + this->m_forwardVelocity.X, this->m_rightVelocity.Y + this->m_forwardVelocity.Y, 0).GetSafeNormal(); }
+    inline bool IsMoving()              { return !this->GetMovingDirection().IsZero(); }
+
+    void Initialize(FVector forwardVec, FVector rightVec);
 
 protected:
 	// Called when the game starts or when spawned
@@ -49,7 +52,11 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     float m_moveSpeed;
 
-    FVector m_currentVelocity;          //The current moving velocity of the player.
+    FVector m_rightVelocity;
+    FVector m_forwardVelocity;
+
+    FVector3d m_forward;         //The forward vector used for movement.
+    FVector3d m_right;           //The right vector used for movement.
 
     void MoveForward(float value);
     void MoveRight(float value);
