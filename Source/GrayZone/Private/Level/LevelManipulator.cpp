@@ -76,7 +76,7 @@ void ALevelManipulator::SpawnOrEnablePlayer(FVector spawnPos)
 
 void ALevelManipulator::CleanLevel()
 {
-    if (m_spawnedPlayer != nullptr) m_spawnedPlayer->SetActorHiddenInGame(true);
+    if (m_spawnedPlayer != nullptr) m_spawnedPlayer->SetActorHiddenInGame(true); //If there's a spawned player, we hide it.
 
     this->m_dungeonDecorator->Clean();
     this->m_dungeonGenerator->Clean();

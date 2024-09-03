@@ -3,6 +3,9 @@
 
 #include "Player/PlayerCharacter.h"
 
+FString const APlayerCharacter::RIGHT_HAND_IK = TEXT("item_r");
+FString const APlayerCharacter::LEFT_HAND_IK  = TEXT("item_l");
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -25,7 +28,7 @@ APlayerCharacter::APlayerCharacter()
     this->m_arrow->SetupAttachment(this->RootComponent);
 
     //Initialize velocities and movement directions.
-    m_forward = m_right = FVector::ZeroVector;
+    m_forwardVector = m_rightVector = FVector::ZeroVector;
     m_forwardVelocity = m_rightVelocity = FVector::ZeroVector;
 }
 
@@ -33,13 +36,14 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+    this->EquipWeapon(this->m_equippedWeaponType);
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 
     if (this->IsMoving())
     {
@@ -62,8 +66,8 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 void APlayerCharacter::Initialize(FVector forwardVec, FVector rightVec)
 {
-    this->m_forward = forwardVec.GetSafeNormal();
-    this->m_right   = rightVec.GetSafeNormal();
+    this->m_forwardVector = forwardVec.GetSafeNormal();
+    this->m_rightVector   = rightVec.GetSafeNormal();
 }
 
 // Called to bind functionality to input
@@ -73,15 +77,53 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
     PlayerInputComponent->BindAxis("MoveForward", this, &APlayerCharacter::MoveForward);
     PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
+    PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &APlayerCharacter::Attack);
 }
 
 void APlayerCharacter::MoveForward(float value)
 {
-    this->m_forwardVelocity = m_forward * FMath::Clamp(value, -1, 1);
+    this->m_forwardVelocity = m_forwardVector * FMath::Clamp(value, -1, 1);
 }
 
 void APlayerCharacter::MoveRight(float value)
 {
-    this->m_rightVelocity = m_right * FMath::Clamp(value, -1, 1);
+    this->m_rightVelocity = m_rightVector * FMath::Clamp(value, -1, 1);
+}
+
+void APlayerCharacter::Attack()
+{
+    if (m_equippedWeapon == nullptr) return;
+
+    this->m_attacking = true;
+    this->m_equippedWeapon->StartAttackAnim(this->m_mesh->GetAnimInstance());
+}
+
+void APlayerCharacter::AttackEnded()
+{
+    this->m_equippedWeapon->ResetWeapon();
+    this->m_attacking = false;
+}
+
+void APlayerCharacter::EquipWeapon(EWeaponType weaponType)
+{
+    if (weaponType > this->m_allWeaponTypes.Num())
+    {
+        UE_LOG(LogTemp, Fatal, TEXT(""));
+        return;
+    }
+
+    if (!this->m_equippedWeapon.IsNull()) this->m_equippedWeapon->Destroy(); //If there's already a weapon equipped, we destroy it...
+    if (weaponType > 0) //Then we spawn the specified weapon and initialize it...
+    {
+        FActorSpawnParameters params;
+        params.Owner = this;
+        this->m_equippedWeapon = this->GetWorld()->SpawnActor<AWeaponBase>(this->m_allWeaponTypes[weaponType - 1], this->GetActorLocation(), FRotator::ZeroRotator, params);
+        
+        this->m_equippedWeapon->InitializeWeapon(this->m_mesh, APlayerCharacter::RIGHT_HAND_IK, APlayerCharacter::LEFT_HAND_IK);
+    }
+
+
+
+    this->m_equippedWeaponType = weaponType; //And finally change the equipped weapon type variable to the right one.
 }
 

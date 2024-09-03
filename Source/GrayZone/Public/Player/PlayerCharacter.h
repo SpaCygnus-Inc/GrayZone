@@ -9,7 +9,16 @@
 #include "Components/ArrowComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimMontage.h"
+#include "Player/Weapons/WeaponBase.h"
 #include "PlayerCharacter.generated.h"
+
+UENUM(BlueprintType)
+enum EWeaponType
+{
+    NONE,
+    DOUBLE_PAIN
+};
 
 UCLASS()
 class GRAYZONE_API APlayerCharacter : public APawn
@@ -17,28 +26,44 @@ class GRAYZONE_API APlayerCharacter : public APawn
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
+
 	APlayerCharacter();
 
-    // Called every frame
     virtual void Tick(float DeltaTime) override;
 
-    // Called to bind functionality to input
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
     
+    UFUNCTION(BlueprintCallable) inline FVector GetCurrentVelocity() { return  this->GetMovingDirection() * this->m_moveSpeed; } ;
+
+    UFUNCTION(BlueprintCallable) inline bool        IsAttacking()           const { return this->m_attacking; }
+    UFUNCTION(BlueprintCallable) inline EWeaponType GetEquippedWeaponType() const { return this->m_equippedWeaponType; }
+
+    /* 
+    * Get in which direction the player is currently moving. 
+    */
+    inline FVector GetMovingDirection() const { return  FVector(this->m_rightVelocity.X + this->m_forwardVelocity.X, this->m_rightVelocity.Y + this->m_forwardVelocity.Y, 0).GetSafeNormal(); }
+    inline bool IsMoving()              const { return  !this->IsAttacking() && !this->GetMovingDirection().IsZero(); }
+
+    /** 
+    * This is called whenever a normal/special attack has ended. 
+    */
     UFUNCTION(BlueprintCallable)
-    inline FVector GetCurrentVelocity() { return  this->GetMovingDirection() * this->m_moveSpeed; } ;
+    void AttackEnded();
 
-    inline FVector GetMovingDirection() { return  FVector(this->m_rightVelocity.X + this->m_forwardVelocity.X, this->m_rightVelocity.Y + this->m_forwardVelocity.Y, 0).GetSafeNormal(); }
-    inline bool IsMoving()              { return !this->GetMovingDirection().IsZero(); }
-
+    /** 
+    * We initialize the player with the forward and right vectors that will be mainly used for movement (Usually these are depened on the camera roation). 
+    */
     void Initialize(FVector forwardVec, FVector rightVec);
+    void EquipWeapon(EWeaponType weaponType);
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
 private:
+
+    FString static const RIGHT_HAND_IK;
+    FString static const LEFT_HAND_IK;
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     TObjectPtr<UCapsuleComponent> m_collider;
@@ -52,13 +77,25 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     float m_moveSpeed;
 
-    FVector m_rightVelocity;
-    FVector m_forwardVelocity;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = true))
+    TEnumAsByte<EWeaponType> m_equippedWeaponType;
 
-    FVector3d m_forward; //The forward vector used for movement.
-    FVector3d m_right;   //The right vector used for movement.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = true))
+    TArray<TSubclassOf<AWeaponBase>> m_allWeaponTypes;
+
+    FVector m_rightVelocity;   //The current velocity of the player along the x axis.
+    FVector m_forwardVelocity; //The current velocity of the player along the y axis.
+
+    FVector3d m_rightVector;   //The right vector used for movement.
+    FVector3d m_forwardVector; //The forward vector used for movement.
+
+    bool m_attacking;
+    TObjectPtr<AWeaponBase> m_equippedWeapon;
 
     void MoveForward(float value);
     void MoveRight(float value);
+    void Attack();
+    //void SpecialAttack();
+    //void Dodge();
 
 };
