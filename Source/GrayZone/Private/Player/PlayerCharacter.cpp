@@ -37,7 +37,7 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-    this->EquipWeapon(this->m_equippedWeaponType);
+    this->EquipWeapon(this->m_equippedWeaponType);                                                    //We spawn and setup the equipped weapon.
 }
 
 // Called every frame
@@ -90,18 +90,16 @@ void APlayerCharacter::MoveRight(float value)
     this->m_rightVelocity = m_rightVector * FMath::Clamp(value, -1, 1);
 }
 
+void APlayerCharacter::RotateTowardCursor()
+{
+    
+}
+
 void APlayerCharacter::Attack()
 {
     if (m_equippedWeapon == nullptr) return;
 
-    this->m_attacking = true;
     this->m_equippedWeapon->StartAttackAnim(this->m_mesh->GetAnimInstance());
-}
-
-void APlayerCharacter::AttackEnded()
-{
-    this->m_equippedWeapon->ResetWeapon();
-    this->m_attacking = false;
 }
 
 void APlayerCharacter::EquipWeapon(EWeaponType weaponType)

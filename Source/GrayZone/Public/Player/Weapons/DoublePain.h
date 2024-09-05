@@ -45,7 +45,7 @@ private:
     bool m_fireRightArm; //This will help us toggle between the left and right arm when firing.
 
 
-    //These are used just for the now as we're using place holder assets, later these will get removed.
+    //These are used just for now as we're using place holder assets, later these will get removed.
     #if WITH_EDITORONLY_DATA
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     FRotator m_rotationR; //The relative rotation of the weapon on the right hand.

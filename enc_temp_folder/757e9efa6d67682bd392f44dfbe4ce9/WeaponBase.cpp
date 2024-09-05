@@ -39,7 +39,7 @@ void AWeaponBase::StartAttackAnim(TObjectPtr<UAnimInstance> const playerAnim)
     attackInfo.AttackAnim = this->m_attackMontage;
     attackInfo.Damage     = 0;
 
-    this->m_weaponState = EWeaponState::ATTACK;                  //We change the weapon state.
+    this->m_weaponState = EWeaponState::ATTACK;                              //We change the weapon state.
     this->m_attacksComponent->BasicProjectileAttack(attackInfo); //And then finally we play the attack.
 }
 

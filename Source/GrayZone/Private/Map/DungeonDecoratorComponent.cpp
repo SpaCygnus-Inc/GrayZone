@@ -21,6 +21,11 @@ UDungeonDecoratorComponent::UDungeonDecoratorComponent()
     this->m_WallsByPackOf        = FIntPoint(4, 7);
 }
 
+UDungeonDecoratorComponent::~UDungeonDecoratorComponent()
+{
+    
+}
+
 void UDungeonDecoratorComponent::DecorateDungeon(TObjectPtr<UDungeonGeneratorComponent> const dungeonGenerator, TObjectPtr<AActor> const parentActor)
 {
     this->PlaceCorridors(dungeonGenerator, parentActor);

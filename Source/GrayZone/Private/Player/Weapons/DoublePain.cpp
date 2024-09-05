@@ -3,7 +3,7 @@
 
 #include "Player/Weapons/DoublePain.h"
 
-ADoublePain::ADoublePain()
+ADoublePain::ADoublePain() : AWeaponBase()
 {
     this->m_leftPistol = this->CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("pistol_l"));
     this->m_leftPistol->SetupAttachment(this->RootComponent);
@@ -16,8 +16,7 @@ ADoublePain::ADoublePain()
 
 void ADoublePain::InitializeWeapon(TObjectPtr<USkeletalMeshComponent> const playerMesh, FString rightHandIk, FString leftHandIk)
 {
-    auto socketLocation = playerMesh->GetSocketLocation(FName(rightHandIk));
-    auto socketRotation = playerMesh->GetSocketRotation(FName(rightHandIk));
+    Super::InitializeWeapon(playerMesh, rightHandIk, leftHandIk);
 
     this->m_rightPistol->AttachToComponent(playerMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName(rightHandIk));
     this->m_rightPistol->SetRelativeRotation(this->m_rotationR);
@@ -28,10 +27,14 @@ void ADoublePain::InitializeWeapon(TObjectPtr<USkeletalMeshComponent> const play
 
 void ADoublePain::StartAttackAnim(TObjectPtr<UAnimInstance> const playerAnim)
 {
-    this->m_weaponState = EWeaponState::ATTACK;
+    //We set all the attack params.
+    auto attackInfo       = FAttackInfo();
+    attackInfo.AttackAnim = this->m_fireRightArm ? this->m_attackMontage : this->m_attack2Montage; //We use the montage with the right arm.
+    attackInfo.Damage     = 0;
 
-    if (this->m_fireRightArm) playerAnim->Montage_Play(this->m_attackMontage);
-    else                      playerAnim->Montage_Play(this->m_attack2Montage);
+    //We change the weapon state and start the attack.
+    this->m_weaponState = EWeaponState::ATTACK;
+    this->m_attacksComponent->BasicProjectileAttack(attackInfo);
 
     this->m_fireRightArm = !this->m_fireRightArm;
 }

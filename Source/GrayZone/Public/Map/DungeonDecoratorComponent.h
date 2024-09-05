@@ -31,6 +31,7 @@ class GRAYZONE_API UDungeonDecoratorComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UDungeonDecoratorComponent();
+    ~UDungeonDecoratorComponent();
 
     void DecorateDungeon(TObjectPtr<UDungeonGeneratorComponent> const dungeonGenerator, TObjectPtr<AActor> const parentActor);
     void Clean();

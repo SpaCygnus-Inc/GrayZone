@@ -35,7 +35,7 @@ public:
     
     UFUNCTION(BlueprintCallable) inline FVector GetCurrentVelocity() { return  this->GetMovingDirection() * this->m_moveSpeed; } ;
 
-    UFUNCTION(BlueprintCallable) inline bool        IsAttacking()           const { return this->m_attacking; }
+    UFUNCTION(BlueprintCallable) inline bool        IsAttacking()           const { return this->m_equippedWeapon != nullptr && this->m_equippedWeapon->GetState() != EWeaponState::IDLE && this->m_equippedWeapon->GetState() != EWeaponState::DODGE; }
     UFUNCTION(BlueprintCallable) inline EWeaponType GetEquippedWeaponType() const { return this->m_equippedWeaponType; }
 
     /* 
@@ -43,12 +43,6 @@ public:
     */
     inline FVector GetMovingDirection() const { return  FVector(this->m_rightVelocity.X + this->m_forwardVelocity.X, this->m_rightVelocity.Y + this->m_forwardVelocity.Y, 0).GetSafeNormal(); }
     inline bool IsMoving()              const { return  !this->IsAttacking() && !this->GetMovingDirection().IsZero(); }
-
-    /** 
-    * This is called whenever a normal/special attack has ended. 
-    */
-    UFUNCTION(BlueprintCallable)
-    void AttackEnded();
 
     /** 
     * We initialize the player with the forward and right vectors that will be mainly used for movement (Usually these are depened on the camera roation). 
@@ -89,11 +83,16 @@ private:
     FVector3d m_rightVector;   //The right vector used for movement.
     FVector3d m_forwardVector; //The forward vector used for movement.
 
-    bool m_attacking;
-    TObjectPtr<AWeaponBase> m_equippedWeapon;
+    TObjectPtr<AWeaponBase> m_equippedWeapon; //The weapon currently equipped and used by the player.
 
     void MoveForward(float value);
     void MoveRight(float value);
+
+    /**
+    * Rotate the player toward the mouse cursor.   
+    */
+    void RotateTowardCursor();
+
     void Attack();
     //void SpecialAttack();
     //void Dodge();

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "CharactersComponents/AttacksComponent.h"
 #include "WeaponBase.generated.h"
 
 UENUM()
@@ -39,13 +40,20 @@ public:
     virtual void ResetWeapon() { this->m_weaponState = EWeaponState::IDLE; }
     
     //Make sure to attach the weapon to the player and initialize everything else.
-    virtual void InitializeWeapon(TObjectPtr<USkeletalMeshComponent> const playerMesh, FString const rightHandIk, FString const leftHandIk) PURE_VIRTUAL(AWeaponBase::InitializeWeapon, );
+    virtual void InitializeWeapon(TObjectPtr<USkeletalMeshComponent> const playerMesh, FString const rightHandIk, FString const leftHandIk);
 
-    void WeaponVisibility(bool visible); //Take care of either hiding or showing the weapon (also enable/disable collision and ticking).
+    /**
+    * Take care of either hiding or showing the weapon (also enable/disable collision and ticking).
+    */
+    void WeaponVisibility(bool visible);
+    EWeaponState inline GetState() const { return this->m_weaponState; }
 
 protected:
 
 	virtual void BeginPlay() override;
+
+    UPROPERTY()
+    TObjectPtr<UAttacksComponent> m_attacksComponent;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = true))
     TObjectPtr<UAnimMontage> m_attackMontage; 
