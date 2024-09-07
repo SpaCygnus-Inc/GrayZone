@@ -90,3 +90,16 @@ TArray<TSharedRef<Tile>> UGlobalStatics::GetBestPath(UDungeonGeneratorComponent&
     return path;
 }
 
+FVector UGlobalStatics::GetCursorWorldPositionOnZPlane(const UWorld* world, float zPlane)
+{
+    //We get the cursor world position and direction.
+    auto cursorPos = FVector();
+    auto cursorDir = FVector();
+    world->GetFirstPlayerController()->DeprojectMousePositionToWorld(cursorPos, cursorDir);
+          
+    auto multiplier = (zPlane - cursorPos.Z) / cursorDir.Z;           //We calculate how long it will take for the cursor line to intersect with the plane.
+    auto cursorZPlaneLocation = cursorPos + (cursorDir * multiplier); //And then we get the line point of intersection with the z plane.
+
+    return cursorZPlaneLocation;
+}
+

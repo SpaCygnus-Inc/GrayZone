@@ -31,7 +31,9 @@ protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
 
+    #if WITH_EDITOR
     void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+    #endif
 
 private:
 

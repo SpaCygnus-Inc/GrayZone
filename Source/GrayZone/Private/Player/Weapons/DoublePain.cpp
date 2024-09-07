@@ -19,10 +19,18 @@ void ADoublePain::InitializeWeapon(TObjectPtr<USkeletalMeshComponent> const play
     Super::InitializeWeapon(playerMesh, rightHandIk, leftHandIk);
 
     this->m_rightPistol->AttachToComponent(playerMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName(rightHandIk));
-    this->m_rightPistol->SetRelativeRotation(this->m_rotationR);
-
     this->m_leftPistol->AttachToComponent(playerMesh , FAttachmentTransformRules::SnapToTargetNotIncludingScale, FName(leftHandIk));
+
+
+    #if WITH_EDITOR
+
+    this->m_rightPistol->SetRelativeRotation(this->m_rotationR);
+    this->m_rightPistol->SetRelativeLocation(this->m_relativePositionR);
+
     this->m_leftPistol->SetRelativeRotation(this->m_rotationL);
+    this->m_leftPistol->SetRelativeLocation(this->m_relativePositionL);
+
+    #endif
 }
 
 void ADoublePain::StartAttackAnim(TObjectPtr<UAnimInstance> const playerAnim)
@@ -42,7 +50,4 @@ void ADoublePain::StartAttackAnim(TObjectPtr<UAnimInstance> const playerAnim)
 void ADoublePain::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    this->m_rightPistol->SetRelativeLocation(this->m_relativePositionR);
-    this->m_leftPistol->SetRelativeLocation(this->m_relativePositionL);
 }

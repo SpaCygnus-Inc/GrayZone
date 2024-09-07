@@ -47,6 +47,11 @@ class GRAYZONE_API UGlobalStatics : public UObject
 
     inline static FIntPoint SwapFIntPoints(FIntPoint point) { return FIntPoint(point.Y, point.X); }
 
+    /**
+    * We the cursor world position on the specified z plane.
+    */
+    static FVector GetCursorWorldPositionOnZPlane(const UWorld* world, float zPlane);
+
     private:
 
     static int GetTileCost(TSharedRef<Tile> const tile, UDungeonGeneratorComponent& dungeon, int startingCost);

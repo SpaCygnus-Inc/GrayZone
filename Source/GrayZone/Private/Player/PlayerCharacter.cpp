@@ -2,6 +2,7 @@
 
 
 #include "Player/PlayerCharacter.h"
+#include "Global/GlobalStatics.h"
 
 FString const APlayerCharacter::RIGHT_HAND_IK = TEXT("item_r");
 FString const APlayerCharacter::LEFT_HAND_IK  = TEXT("item_l");
@@ -92,14 +93,27 @@ void APlayerCharacter::MoveRight(float value)
 
 void APlayerCharacter::RotateTowardCursor()
 {
+    //We get the cursor world position and direction.
+    auto cursorPos = FVector();
+    auto cursorDir = FVector();
+    this->GetWorld()->GetFirstPlayerController()->DeprojectMousePositionToWorld(cursorPos, cursorDir);
+
+    //Using the player z position, we get our z plane that we're going to use to find the real world location of the cursor.
+    auto cursorZPlaneLocation = UGlobalStatics::GetCursorWorldPositionOnZPlane(this->GetWorld(), this->GetActorLocation().Z);
+
+    //After getting the cursor position, we want to get player - cursor direction so that we can rotate the player correctly toward it.
+    auto direction = cursorZPlaneLocation - this->GetActorLocation();
+    direction.Z    = 0; //We set the z param to zero just in case.
     
+    this->SetActorRotation(direction.Rotation());
 }
 
 void APlayerCharacter::Attack()
 {
     if (m_equippedWeapon == nullptr) return;
-
-    this->m_equippedWeapon->StartAttackAnim(this->m_mesh->GetAnimInstance());
+    
+    this->RotateTowardCursor();                                               //We rotate the player toward the target position...
+    this->m_equippedWeapon->StartAttackAnim(this->m_mesh->GetAnimInstance()); //Then we play the attack.
 }
 
 void APlayerCharacter::EquipWeapon(EWeaponType weaponType)
